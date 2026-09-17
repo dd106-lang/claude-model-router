@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+bench/work/
+bench/*.sid
+bench/*.json

@@ -1,0 +1,10 @@
+{
+  "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
+  "name": "model-router",
+  "version": "1.0.0",
+  "description": "Keep the expensive lead model on planning and review; route routine work to pinned cheaper workers (Haiku, Sonnet, Opus) and audit which models actually ran.",
+  "author": {
+    "name": "dd106-lang"
+  },
+  "keywords": ["subagents", "model-routing", "cost", "tokens", "delegation"]
+}

@@ -1,0 +1,16 @@
+{
+  "name": "team-claude-tools",
+  "owner": {
+    "name": "dd106-lang"
+  },
+  "metadata": {
+    "description": "Shared Claude Code plugins for the team."
+  },
+  "plugins": [
+    {
+      "name": "model-router",
+      "source": "./plugins/model-router",
+      "description": "Keep the expensive lead model on planning and review; route routine work to pinned cheaper workers (Haiku, Sonnet, Opus) and audit which models actually ran."
+    }
+  ]
+}
