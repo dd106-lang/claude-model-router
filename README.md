@@ -2,7 +2,9 @@
 
 A Claude Code plugin that keeps your expensive model on the thinking and sends the routine work to cheaper ones.
 
-You run your session on Fable or Opus as usual. That model, the lead, plans the work, makes the decisions, and reviews the results. When a piece of work is well defined, the lead hands it to a worker that is pinned to a cheaper model. The worker does the job in its own context window and sends back a short report.
+You run your session on Fable or Opus as usual. That model, the lead, plans the work, makes the decisions, and reviews the results. Everything else it hands to a worker pinned to a cheaper model. The worker does the job in its own context window and sends back a short report.
+
+Delegation is the default, not a special case. The lead's allowance is the one that runs out first, so the plugin treats the lead's tokens as the scarce resource and the workers' as cheap. Escalation runs downward too: when the Sonnet builder gets stuck, the work goes to the Opus specialist rather than back up to the lead.
 
 | Worker | Pinned model | What it does |
 |---|---|---|
@@ -33,11 +35,12 @@ How to read this:
 - The weekly figure is arithmetic on the measured reduction. Using 32% less Fable per task means the same allowance covers 1 / (1 - 0.32), about 1.46 times as many tasks. At 57% it is about 2.3 times. This applies when the Fable allowance is the limit you hit first. If you hit your overall plan limit first, use the combined column, about 7%.
 - The saving tracks how much bulk writing and reading a task contains. Small tasks and reasoning-heavy investigations save little, because the lead still has to load its own context and do the thinking. No routing removes that fixed cost.
 - These are single runs of three tasks, so treat the numbers as rough. Your own mix decides your result, and you can measure it with `/model-router:usage-audit`. The benchmark tasks and scripts are in `bench/` if you want to repeat them.
+- They were measured with version 1.0. Version 1.1 lowers the thresholds so that more work goes down, and sends stuck work to the specialist instead of back to the lead. That should move the two weaker rows, but it has not been re-measured, so the table stands as the conservative number.
 
 ## What is in the plugin
 
 - **Four subagents** with `model:` pinned in their definitions. Claude Code enforces the pin; it is a setting, and the lead is not merely asked to behave like a cheaper model.
-- **A session-start hook** that puts a short delegation policy (about 600 tokens) into the lead's context. This is what makes delegation happen without being asked. The text is in `plugins/model-router/hooks/policy.md`.
+- **A session-start hook** that puts a short delegation policy (about 950 tokens) into the lead's context. This is what makes delegation happen without being asked. The text is in `plugins/model-router/hooks/policy.md`.
 - **`/model-router:route [task]`**: the full playbook, including how to split a task, how to write a brief, and how to review. The lead can load it by itself; you can also invoke it to plan a specific task.
 - **`/model-router:usage-audit`**: reads your local transcripts and shows which models ran and what each one used. Use it to confirm that routing is working.
 
@@ -74,7 +77,7 @@ claude plugin marketplace add /path/to/claude-model-router
 }
 ```
 
-Start a new session after installing. Plugins load at session start. The plugin adds about 1,500 tokens to every session: the worker and skill descriptions plus the policy. `claude plugin details model-router@team-claude-tools` shows the inventory.
+Start a new session after installing. Plugins load at session start. The plugin adds about 1,800 tokens to every session: the worker and skill descriptions plus the policy. `claude plugin details model-router@team-claude-tools` shows the inventory.
 
 ## Use
 
@@ -106,7 +109,8 @@ The Subagents block is the proof: each worker type is listed with the model id t
 ## What to expect
 
 - **Delegation is a decision the lead makes.** The policy makes it the default for suitable work, but it is not a guarantee. When it matters, name the worker.
-- **Small tasks are not worth delegating.** Every worker starts by loading its own system prompt and tools: about 5 to 10 thousand tokens for scout and runner, and about 30 thousand for builder and specialist, at the worker's cheaper rate. The policy tells the lead to delegate by volume (more than about 40 lines to write, or more than about five files to read) and to do smaller jobs itself.
+- **Very small jobs stay with the lead.** Every worker starts by loading its own system prompt and tools: about 5 to 10 thousand tokens for scout and runner, and about 30 thousand for builder and specialist, at the worker's cheaper rate. That is cheap next to the lead's rate, so the bar is deliberately low: more than about 15 lines to write, more than about two files or 150 lines to read, or any command whose output runs past a few lines. Below that the lead does it itself, because the start-up cost would dominate.
+- **The lead does not retry by hand.** If the builder fails twice, the work goes to the specialist. If the specialist fails, the lead reports the state and asks you, rather than grinding at its own rate. Taking over itself is reserved for judgment calls that need the conversation.
 - **The lead must not redo delegated work.** In early testing the lead started a scout in the background and then did the same investigation itself while waiting, which paid for the work twice. The policy now forbids that and tells the lead to wait for results it depends on. If the audit shows workers running but no drop in lead usage, this is the first thing to look for.
 - **Routing reduces the weight of your usage; it does not make usage free.** On a subscription, every model draws from the same plan. Depending on your plan, Fable may bill to usage credits instead of plan limits; the model picker says so when it does.
 - **Only downward delegation saves anything.** If your session runs on Sonnet, the builder is the same price as you, and the policy tells the lead to do routine work itself. On Opus, the same is true of the specialist.
