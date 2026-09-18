@@ -48,7 +48,7 @@ How to read this:
 
 You need Claude Code 2.1.251 or later (`claude --version`). The audit needs Python 3.8 or later.
 
-**From GitHub.** The repository is private, so you need to have been invited to it, and git on your machine must be signed in to GitHub (`gh auth login`, then `gh auth setup-git`).
+**From GitHub.** The repository is public, so there is nothing to sign in to and no access to request.
 
 ```bash
 claude plugin marketplace add dd106-lang/claude-model-router
