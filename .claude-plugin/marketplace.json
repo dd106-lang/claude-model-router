@@ -10,7 +10,7 @@
     {
       "name": "model-router",
       "source": "./plugins/model-router",
-      "description": "Keep the expensive lead model on planning and review; route routine work to pinned cheaper workers (Haiku, Sonnet, Opus) and audit which models actually ran."
+      "description": "Balance your usage meters: the lead model keeps the thinking, bulk work goes to pinned cheaper workers (Haiku, Sonnet) with Opus kept rare, fan-outs name their models, and an audit shows which models actually ran."
     }
   ]
 }

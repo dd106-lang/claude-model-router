@@ -236,6 +236,14 @@ def money(x):
     return "n/a" if x is None else "$%.2f" % x
 
 
+def family(model):
+    """claude-fable-5-1 -> fable. Unknown ids are returned unchanged."""
+    for name in ("fable", "mythos", "opus", "sonnet", "haiku"):
+        if name in model:
+            return name
+    return model
+
+
 def summarize(calls, prices, lead_override):
     rows = defaultdict(lambda: dict(calls=0, **{f: 0 for f in FIELDS}))
     agents = defaultdict(lambda: {"runs": set(), "models": set(), "calls": 0, "tokens": 0, "out": 0})
@@ -282,7 +290,18 @@ def summarize(calls, prices, lead_override):
         actual += x["cost"]
         at_lead += cost(prices, lead_price, x)
 
+    # Share of list-price-weighted usage per model family, lead and subagents together.
+    # This is the number to steer balanced burn by: compare the top model's share with your target.
+    fam_cost = defaultdict(float)
+    for x in table:
+        if x["cost"]:
+            fam_cost[family(x["model"])] += x["cost"]
+    total_cost = sum(fam_cost.values())
+    shares = [dict(family=k, pct=round(100.0 * v / total_cost, 1))
+              for k, v in sorted(fam_cost.items(), key=lambda kv: -kv[1])] if total_cost else []
+
     return {
+        "weighted_share_by_family": shares,
         "sessions": len(sessions),
         "first": first.isoformat() if first else None,
         "last": last.isoformat() if last else None,
@@ -324,6 +343,9 @@ def print_report(s, scope):
     print("")
 
     print("Lead model: %s" % (s["lead_model"] or "none found"))
+    if s["weighted_share_by_family"]:
+        print("Share of weighted usage: %s" % ", ".join(
+            "%s %.0f%%" % (f["family"], f["pct"]) for f in s["weighted_share_by_family"]))
     if s["pct_output_on_cheaper_models"] is not None:
         print("Output tokens produced by models cheaper than the lead: %.1f%%" % s["pct_output_on_cheaper_models"])
     if s["subagent_cost_if_on_lead"]:

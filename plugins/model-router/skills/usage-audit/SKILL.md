@@ -32,6 +32,7 @@ The current session's numbers lag a little, because a call is written to the tra
 
 - Each row is one model in one role. `lead` is the main conversation; `subagent` is everything that was delegated.
 - The **Subagents** block lists each worker type, how many times it ran, and the model it ran on. This is where you confirm that `model-router:scout` and `model-router:runner` ran on Haiku, `model-router:builder` on Sonnet, and `model-router:specialist` on Opus.
+- **Share of weighted usage** splits list-price-weighted usage by model family, lead and subagents together. It is the number to steer balanced burn by. When the Fable meter and the all-models meter burn at the same rate, Fable's share equals the ratio of the two allowances; about a quarter is a reasonable first target on a Max plan. Run it with `--since` set to the start of the current weekly window and compare: a Fable share well under the target, with Opus taking most of the rest, means the thinking is being done by the slow tier (lean `lead-heavy`); a Fable share well over it means the lead is doing bulk work (lean `protect-lead`).
 - **Output tokens produced by models cheaper than the lead** is the quickest health check. If it is near zero over a working session, the lead is doing everything itself.
 - The dollar figures are API list prices, used to compare models with each other. Subscription plans are not billed per token, so present them as relative weight and never as the user's bill.
 
@@ -41,7 +42,8 @@ Tell the user, briefly:
 
 1. Which model led, and which models the subagents ran on.
 2. The share of output tokens that ran on cheaper models, and the rough saving the script estimated.
-3. One observation, if there is one. Examples: a worker type that ran on the lead's model (it was called with a `model` override, or the pinned definitions are not installed); many tiny delegations where the fixed start-up cost outweighs the saving; no delegation at all in a session full of routine work.
+3. The share of weighted usage by model family, and which lean it points to.
+4. One observation, if there is one. Examples: a worker type that ran on the lead's model (it was called with a `model` override, or the pinned definitions are not installed); `workflow-subagent`, `Explore`, or `general-purpose` runs on Opus or on the lead's model, which means a fan-out did not name its models; one agent type taking most of the tokens; many tiny delegations where the fixed start-up cost outweighs the saving; no delegation at all in a session full of routine work.
 
 Keep the script's caveat: the saving assumes another model would have used the same number of tokens, which is only roughly true.
 

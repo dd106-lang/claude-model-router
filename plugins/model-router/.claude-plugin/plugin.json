@@ -1,8 +1,8 @@
 {
   "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "model-router",
-  "version": "1.1.0",
-  "description": "Keep the expensive lead model on planning and review; route routine work to pinned cheaper workers (Haiku, Sonnet, Opus) and audit which models actually ran.",
+  "version": "1.2.0",
+  "description": "Balance your usage meters: the lead model keeps the thinking, bulk work goes to pinned cheaper workers (Haiku, Sonnet) with Opus kept rare, fan-outs name their models, and an audit shows which models actually ran.",
   "author": {
     "name": "dd106-lang"
   },
