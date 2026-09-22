@@ -49,3 +49,5 @@ Work per fixed Fable allowance: 1.46x  (+46%)
 ```
 
 An earlier version of the policy measured about zero on the build and read tasks. It told the lead to skip anything it could finish in about three tool calls, and Fable can write hundreds of lines in two calls, so nothing was delegated. On the read task the lead also repeated the scout's work while it waited. Both rules were rewritten before the runs above.
+
+The numbers above are from plugin version 1.0. Version 1.2's `balanced` and `lead-heavy` leans have not been re-measured; see the main README for what the combined column suggests about them.
