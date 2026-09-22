@@ -138,15 +138,23 @@ def read_calls(transcripts, since):
         except OSError:
             skipped += 1
             continue
+        prev_when = None
         with handle:
             for line in handle:
-                if '"assistant"' not in line:
-                    continue
                 try:
                     entry = json.loads(line)
                 except ValueError:
                     continue
-                if not isinstance(entry, dict) or entry.get("type") != "assistant":
+                if not isinstance(entry, dict):
+                    continue
+                when = parse_ts(entry.get("timestamp"))
+                latency = None
+                if when and prev_when:
+                    gap = (when - prev_when).total_seconds()
+                    if 0 <= gap <= 3600:
+                        latency = gap
+                prev_when = when or prev_when
+                if entry.get("type") != "assistant":
                     continue
                 msg = entry.get("message")
                 if not isinstance(msg, dict):
@@ -154,7 +162,6 @@ def read_calls(transcripts, since):
                 model, usage = msg.get("model"), msg.get("usage")
                 if not model or model == "<synthetic>" or not isinstance(usage, dict):
                     continue
-                when = parse_ts(entry.get("timestamp"))
                 if since and when and when < since:
                     continue
                 key = entry.get("requestId") or msg.get("id") or entry.get("uuid")
@@ -179,7 +186,7 @@ def read_calls(transcripts, since):
                 record = {"model": model, "role": "subagent" if sidechain else "lead",
                           "agent": agent or ("sidechain" if sidechain else None),
                           "run": path if kind == "sub" else None,
-                          "project": project, "session": session, "when": when}
+                          "project": project, "session": session, "when": when, "latency": latency}
                 record.update(numbers)
                 calls[key] = record
     return calls, skipped
@@ -245,7 +252,7 @@ def family(model):
 
 
 def summarize(calls, prices, lead_override):
-    rows = defaultdict(lambda: dict(calls=0, **{f: 0 for f in FIELDS}))
+    rows = defaultdict(lambda: dict(calls=0, lat_n=0, lat_sum=0.0, **{f: 0 for f in FIELDS}))
     agents = defaultdict(lambda: {"runs": set(), "models": set(), "calls": 0, "tokens": 0, "out": 0})
     sessions, first, last = set(), None, None
     for c in calls.values():
@@ -253,6 +260,9 @@ def summarize(calls, prices, lead_override):
         r["calls"] += 1
         for f in FIELDS:
             r[f] += c[f]
+        if c["latency"] is not None:
+            r["lat_n"] += 1
+            r["lat_sum"] += c["latency"]
         sessions.add((c["project"], c["session"]))
         if c["when"]:
             first = c["when"] if first is None or c["when"] < first else first
@@ -269,6 +279,7 @@ def summarize(calls, prices, lead_override):
     for (model, role), r in rows.items():
         row = dict(model=model, role=role, **r)
         row["cost"] = cost(prices, price_for(prices, model), r)
+        row["sec_per_call"] = round(r["lat_sum"] / r["lat_n"], 1) if r["lat_n"] else None
         table.append(row)
     table.sort(key=lambda x: (x["role"] != "lead", -(x["cost"] or 0), -x["out"]))
 
@@ -291,7 +302,7 @@ def summarize(calls, prices, lead_override):
         at_lead += cost(prices, lead_price, x)
 
     # Share of list-price-weighted usage per model family, lead and subagents together.
-    # This is the number to steer balanced burn by: compare the top model's share with your target.
+    # Ceiling check: a Fable share above about a quarter means the Fable cap binds first. Not a target.
     fam_cost = defaultdict(float)
     for x in table:
         if x["cost"]:
@@ -324,13 +335,14 @@ def print_report(s, scope):
         print("%d session(s), %s to %s UTC" % (s["sessions"], s["first"][:16].replace("T", " "), s["last"][:16].replace("T", " ")))
     print("calls = de-duplicated API requests; in = uncached input; c.write / c.read = prompt cache; est$ = list price")
     print("")
-    head = "%-34s %-9s %6s %9s %9s %9s %9s %9s" % ("MODEL", "ROLE", "CALLS", "IN", "C.WRITE", "C.READ", "OUT", "EST$")
+    head = "%-34s %-9s %6s %9s %9s %9s %9s %8s %9s" % (
+        "MODEL", "ROLE", "CALLS", "IN", "C.WRITE", "C.READ", "OUT", "SEC/CALL", "EST$")
     print(head)
     print("-" * len(head))
     for x in s["rows"]:
-        print("%-34s %-9s %6d %9s %9s %9s %9s %9s" % (
+        print("%-34s %-9s %6d %9s %9s %9s %9s %8s %9s" % (
             x["model"][:34], x["role"], x["calls"], short(x["in"]), short(x["cw5m"] + x["cw1h"]),
-            short(x["cr"]), short(x["out"]), money(x["cost"])))
+            short(x["cr"]), short(x["out"]), "-" if x["sec_per_call"] is None else x["sec_per_call"], money(x["cost"])))
     print("")
 
     if s["agents"]:
@@ -362,6 +374,8 @@ def print_report(s, scope):
     print("Notes: est$ is API list price (prices.json, as of %s), for comparing models only." % (s["prices_as_of"] or "unknown"))
     print("Subscription plans meter usage differently and are not billed per token. The estimate assumes")
     print("a different model would have used the same number of tokens, which is only roughly true.")
+    print("sec/call is the gap between a call's transcript entry and the entry before it, so it includes")
+    print("thinking and any tool execution the harness ran in between; compare models with each other, not with the API.")
 
 
 def main():

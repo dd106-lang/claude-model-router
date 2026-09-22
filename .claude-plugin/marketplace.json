@@ -10,7 +10,7 @@
     {
       "name": "model-router",
       "source": "./plugins/model-router",
-      "description": "Balance your usage meters: the lead model keeps the thinking, bulk work goes to pinned cheaper workers (Haiku, Sonnet) with Opus kept rare, fan-outs name their models, and an audit shows which models actually ran."
+      "description": "Route each job to the model that does it best for the tokens: Haiku lookups and runs, Sonnet builds, Opus 5.5 reviews and long investigations, the lead keeps the thinking. Fan-outs name their models, and an audit shows what ran and how fast."
     }
   ]
 }

@@ -1,7 +1,7 @@
 ---
 name: specialist
-description: Deep-work worker pinned to Opus at medium effort, capped at 80 turns. The slowest and most expensive worker, so use it rarely - for a long, self-contained investigation that would flood your context, such as a cause still unknown after your bounded look, numerical or timing faults that need repeated run-and-measure cycles, decoding an undocumented protocol or binary format, or work the builder failed at twice that you have diagnosed as a long grind. A hard problem that a bounded look would settle stays with the lead, except under the protect-lead lean. Under lead-heavy, call it with model "fable". On an Opus lead it is lateral, so use it only to keep a long investigation out of your context; on a Sonnet lead, do not use it.
-model: opus
+description: Deep-work worker pinned to Opus 5.5 at medium effort, capped at 80 turns. The longest-running worker, so use it rarely - for a long, self-contained investigation that would flood your context, such as a cause still unknown after your bounded look, numerical or timing faults that need repeated run-and-measure cycles, decoding an undocumented protocol or binary format, or work the builder failed at twice that you have diagnosed as a long grind. A hard problem that a bounded look would settle stays with the lead, except under the protect-lead lean. On an Opus lead it is lateral, so use it only to keep a long investigation out of your context; on a Sonnet lead, do not use it.
+model: claude-opus-5-5
 effort: medium
 maxTurns: 80
 disallowedTools: Agent

@@ -1,6 +1,6 @@
 ---
 name: runner
-description: Command runner pinned to Haiku, the cheapest tier, capped at 15 turns. Use PROACTIVELY to run builds, test suites, linters, scripts, or log and data dumps whose output is likely to be long or noisy, so the raw output stays out of your context. Returns pass or fail plus only the relevant excerpt. Not for fixing what it finds, and not worth it for quick commands with a few lines of output.
+description: Command runner pinned to Haiku, the cheapest tier, capped at 15 turns. Use to run builds, test suites, linters, scripts, or log and data dumps whose output is likely to be long or noisy, or that may take several attempts, so the raw output stays out of your context; this applies under every lean. Returns pass or fail plus only the relevant excerpt. Not for fixing what it finds, and not worth it for quick commands with a few lines of output.
 model: haiku
 maxTurns: 15
 tools: Bash, PowerShell, Read, Grep, Glob
